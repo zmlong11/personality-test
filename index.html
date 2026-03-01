@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>性格测试项目</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <h1>性格测试</h1>
+        <p class="subtitle">通过多个回答确认一个人的性格并进行总结</p>
+      </header>
+
+      <section id="intro" class="card">
+        <h2>开始前说明</h2>
+        <ul class="intro-list">
+          <li>本测试用于自我了解，不用于医学诊断。</li>
+          <li>请选择更符合你“通常状态”的选项。</li>
+          <li>用时约 2-3 分钟，结果基于你的回答自动生成。</li>
+        </ul>
+        <button id="start-btn" class="primary-btn">开始测试</button>
+      </section>
+
+      <section id="quiz" class="card hidden">
+        <div class="progress">
+          <span id="progress-text">第 1 / 10 题</span>
+          <div class="progress-bar">
+            <div id="progress-fill"></div>
+          </div>
+        </div>
+
+        <div id="question-container"></div>
+
+        <div class="actions">
+          <button id="prev-btn" class="ghost-btn">上一题</button>
+          <button id="next-btn" class="primary-btn">下一题</button>
+        </div>
+      </section>
+
+      <section id="result" class="card hidden">
+        <h2>你的性格画像</h2>
+        <div id="score-summary" class="score-summary"></div>
+        <div id="result-text" class="result-text"></div>
+        <div class="actions">
+          <button id="restart-btn" class="ghost-btn">重新测试</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
