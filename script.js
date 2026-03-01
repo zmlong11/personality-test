@@ -5,7 +5,37 @@ const questions = [
     direction: 1,
   },
   {
+    text: "在人群中你更容易感到兴奋和投入。",
+    trait: "extroversion",
+    direction: 1,
+  },
+  {
+    text: "长时间独处会让你感到精力下降。",
+    trait: "extroversion",
+    direction: 1,
+  },
+  {
+    text: "你更倾向于在交流中表达观点，而不是仅倾听。",
+    trait: "extroversion",
+    direction: 1,
+  },
+  {
     text: "你喜欢把事情安排得井井有条，再开始行动。",
+    trait: "conscientiousness",
+    direction: 1,
+  },
+  {
+    text: "你倾向于在截止时间前提前完成任务。",
+    trait: "conscientiousness",
+    direction: 1,
+  },
+  {
+    text: "当计划被打乱时，你会感到明显的不适。",
+    trait: "conscientiousness",
+    direction: -1,
+  },
+  {
+    text: "你会把复杂目标拆分成可执行的小步骤。",
     trait: "conscientiousness",
     direction: 1,
   },
@@ -15,23 +45,23 @@ const questions = [
     direction: 1,
   },
   {
-    text: "遇到压力时，你能较快调整并保持冷静。",
-    trait: "stability",
-    direction: 1,
-  },
-  {
-    text: "长时间独处会让你感到精力下降。",
-    trait: "extroversion",
-    direction: 1,
-  },
-  {
-    text: "当计划被打乱时，你会感到明显的不适。",
-    trait: "conscientiousness",
-    direction: -1,
-  },
-  {
     text: "你常常关注艺术、文化或抽象话题。",
     trait: "openness",
+    direction: 1,
+  },
+  {
+    text: "你乐于接受与既有经验不同的观点。",
+    trait: "openness",
+    direction: 1,
+  },
+  {
+    text: "面对变化，你更容易兴奋而非担心。",
+    trait: "openness",
+    direction: 1,
+  },
+  {
+    text: "遇到压力时，你能较快调整并保持冷静。",
+    trait: "stability",
     direction: 1,
   },
   {
@@ -40,13 +70,33 @@ const questions = [
     direction: -1,
   },
   {
-    text: "在人群中你更容易感到兴奋和投入。",
-    trait: "extroversion",
+    text: "你的情绪起伏通常比较稳定。",
+    trait: "stability",
     direction: 1,
   },
   {
-    text: "你倾向于在截止时间前提前完成任务。",
-    trait: "conscientiousness",
+    text: "面对突发状况，你仍能保持思路清晰。",
+    trait: "stability",
+    direction: 1,
+  },
+  {
+    text: "你愿意站在他人角度理解问题。",
+    trait: "agreeableness",
+    direction: 1,
+  },
+  {
+    text: "在团队中你更愿意促进和谐而非争胜。",
+    trait: "agreeableness",
+    direction: 1,
+  },
+  {
+    text: "你会优先考虑他人的感受与需求。",
+    trait: "agreeableness",
+    direction: 1,
+  },
+  {
+    text: "你能在保持原则的同时与人友好相处。",
+    trait: "agreeableness",
     direction: 1,
   },
 ];
@@ -54,8 +104,9 @@ const questions = [
 const options = [
   { label: "非常不符合", value: 1 },
   { label: "不太符合", value: 2 },
-  { label: "比较符合", value: 3 },
-  { label: "非常符合", value: 4 },
+  { label: "一般", value: 3 },
+  { label: "比较符合", value: 4 },
+  { label: "非常符合", value: 5 },
 ];
 
 const traitMeta = {
@@ -63,6 +114,7 @@ const traitMeta = {
   conscientiousness: { name: "尽责", color: "#34d399" },
   openness: { name: "开放", color: "#fbbf24" },
   stability: { name: "情绪稳定", color: "#a78bfa" },
+  agreeableness: { name: "亲和", color: "#fb7185" },
 };
 
 const state = {
@@ -128,23 +180,30 @@ const computeScores = () => {
     conscientiousness: 0,
     openness: 0,
     stability: 0,
+    agreeableness: 0,
   };
 
   questions.forEach((question, index) => {
     const answer = state.answers[index];
-    const normalized = question.direction === 1 ? answer : 5 - answer;
+    const normalized = question.direction === 1 ? answer : 6 - answer;
     scores[question.trait] += normalized;
   });
 
   const counts = questions.reduce((acc, q) => {
     acc[q.trait] += 1;
     return acc;
-  }, { extroversion: 0, conscientiousness: 0, openness: 0, stability: 0 });
+  }, {
+    extroversion: 0,
+    conscientiousness: 0,
+    openness: 0,
+    stability: 0,
+    agreeableness: 0,
+  });
 
   return Object.fromEntries(
     Object.entries(scores).map(([trait, value]) => [
       trait,
-      Math.round((value / (counts[trait] * 4)) * 100),
+      Math.round((value / (counts[trait] * 5)) * 100),
     ])
   );
 };
@@ -158,39 +217,114 @@ const buildSummary = (scores) => {
   const secondary = traits[1];
   const lowest = traits[traits.length - 1];
 
-  const lines = [
-    `你最突出的特质是「${traitMeta[strongest.trait].name}」（${strongest.value}%），说明你在这一维度上表现明显。`,
-    `其次是「${traitMeta[secondary.trait].name}」（${secondary.value}%），为你的行为风格提供了稳定支撑。`,
-    `相对较低的是「${traitMeta[lowest.trait].name}」（${lowest.value}%），这是你在特定情境下可能需要关注的方向。`,
-  ];
+  const levelLabel = (value) => {
+    if (value >= 75) return "高";
+    if (value >= 60) return "中高";
+    if (value >= 45) return "中等";
+    return "偏低";
+  };
 
-  if (strongest.trait === "extroversion") {
-    lines.push("你更容易从人与人的互动中获得能量，适合需要协作或表达的环境。");
+  const traitDescriptions = {
+    extroversion: {
+      high: "更容易从互动中获得能量，表达与协作会让你更投入。",
+      mid: "在社交与独处之间能较好平衡，场合不同切换自然。",
+      low: "更偏好独处或小范围交流，深度思考型环境更舒适。",
+    },
+    conscientiousness: {
+      high: "目标感强、执行稳定，擅长规划、把控节奏。",
+      mid: "既能推进计划，也保留一定灵活度。",
+      low: "更容易被新鲜想法吸引，建议用清单提升行动聚焦。",
+    },
+    openness: {
+      high: "对新体验开放，创意与探索动机强。",
+      mid: "对新事物保持理性兴趣，偏好稳中求新。",
+      low: "更注重熟悉与可控，适合需要稳定流程的情境。",
+    },
+    stability: {
+      high: "情绪稳定，在压力下仍能保持节奏。",
+      mid: "多数情况下稳定，极端情境可能波动。",
+      low: "容易被情绪影响，建议通过休息与复盘稳定状态。",
+    },
+    agreeableness: {
+      high: "同理心强，重视关系与团队氛围。",
+      mid: "能在合作与坚持原则之间取得平衡。",
+      low: "更看重效率与结果，沟通时注意表达方式。",
+    },
+  };
+
+  const describeTrait = (trait, value) => {
+    const label = levelLabel(value);
+    const key = value >= 70 ? "high" : value >= 50 ? "mid" : "low";
+    return `「${traitMeta[trait].name}」${label}（${value}%）：${traitDescriptions[trait][key]}`;
+  };
+
+  const jobSuggestions = [];
+  if (scores.extroversion >= 70) {
+    jobSuggestions.push("需要表达与协作的岗位：市场/销售、商务拓展、客户成功、培训讲师。");
+  } else if (scores.extroversion <= 40) {
+    jobSuggestions.push("偏深度专注的岗位：研发/数据分析、设计、写作、研究类工作。");
   }
-  if (strongest.trait === "conscientiousness") {
-    lines.push("你对目标和流程更在意，擅长规划与执行，适合需要结构化推进的任务。");
+  if (scores.conscientiousness >= 70) {
+    jobSuggestions.push("结构化与执行导向岗位：项目管理、运营管理、财务/审计、质量管理。");
   }
-  if (strongest.trait === "openness") {
-    lines.push("你对新体验保持开放，容易产生创意和灵感，适合探索与创新型的工作。");
+  if (scores.openness >= 70) {
+    jobSuggestions.push("创新与探索导向岗位：产品经理、内容策划、交互/视觉设计、研发。");
   }
-  if (strongest.trait === "stability") {
-    lines.push("你更容易保持情绪平衡，在压力中也能稳住节奏，是团队中的稳定力量。");
+  if (scores.stability >= 70) {
+    jobSuggestions.push("节奏稳定型岗位：运营支持、客户服务、现场支持、团队管理。");
+  }
+  if (scores.agreeableness >= 70) {
+    jobSuggestions.push("关系与支持导向岗位：教育培训、人力资源、咨询、社区运营。");
+  }
+  if (jobSuggestions.length === 0) {
+    jobSuggestions.push("你的特质较均衡，可根据兴趣选择岗位，并用优势维度补足短板。");
   }
 
+  const focusTips = [];
   if (lowest.trait === "stability") {
-    lines.push("建议在高压时段留出恢复空间，或通过运动、记录情绪来帮助稳定心态。");
+    focusTips.push("高压时期留出恢复空间，通过运动或记录情绪稳定节奏。");
   }
   if (lowest.trait === "extroversion") {
-    lines.push("独处能够让你恢复能量，同时也可以选择小范围交流来建立连接感。");
+    focusTips.push("选择小范围交流建立连接感，避免过度社交消耗。");
   }
   if (lowest.trait === "conscientiousness") {
-    lines.push("可以尝试使用清单或小目标拆分，让行动更聚焦并减少拖延。");
+    focusTips.push("用清单或时间块管理提升执行力。");
   }
   if (lowest.trait === "openness") {
-    lines.push("适度接触新内容或新活动，能帮助你拓展视野并提升适应性。");
+    focusTips.push("适度尝试新内容，提升适应变化的弹性。");
+  }
+  if (lowest.trait === "agreeableness") {
+    focusTips.push("沟通时多表达意图与边界，减少误解。");
   }
 
-  return lines.join(" ");
+  return `
+    <p>你最突出的特质是「${traitMeta[strongest.trait].name}」（${strongest.value}%），其次是「${traitMeta[secondary.trait].name}」（${secondary.value}%）。</p>
+    <div class="result-section">
+      <h3>核心特质解读</h3>
+      <ul>
+        <li>${describeTrait("extroversion", scores.extroversion)}</li>
+        <li>${describeTrait("conscientiousness", scores.conscientiousness)}</li>
+        <li>${describeTrait("openness", scores.openness)}</li>
+        <li>${describeTrait("stability", scores.stability)}</li>
+        <li>${describeTrait("agreeableness", scores.agreeableness)}</li>
+      </ul>
+    </div>
+    <div class="result-section">
+      <h3>优势与关注点</h3>
+      <ul>
+        <li>优势方向：${traitMeta[strongest.trait].name}带来明显支撑。</li>
+        <li>潜在关注：${traitMeta[lowest.trait].name}相对较低。</li>
+        ${focusTips.map((tip) => `<li>${tip}</li>`).join("")}
+      </ul>
+    </div>
+    <div class="result-section">
+      <h3>可能更适合的工作环境</h3>
+      <ul>
+        ${jobSuggestions.map((item) => `<li>${item}</li>`).join("")}
+      </ul>
+    </div>
+    <p class="result-note">说明：该结果用于自我了解，并非专业心理评估。</p>
+  `;
 };
 
 const renderResult = () => {
@@ -212,7 +346,7 @@ const renderResult = () => {
     scoreSummary.appendChild(item);
   });
 
-  resultText.textContent = buildSummary(scores);
+  resultText.innerHTML = buildSummary(scores);
 };
 
 startBtn.addEventListener("click", () => {
